@@ -141,14 +141,85 @@ class FloatingSidebar {
     this.drawItems(items);
   }
 
-  insertContent(content) {
-    const chatInput = document.getElementById('chat-input');
-    if (chatInput) {
-      chatInput.value = content;
-      chatInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }else{
-      
+  async insertContent(content) {
+    // find
+    const findInput = async (retries = 100, interval = 10) => {
+      for (let i = 0; i < retries; i++) {
+        const input = document.getElementById('chat-input');
+        if (input) return input;
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+      return null;
+    };
+
+    // set text
+    const setInputValue = async (input, retries = 10) => {
+      for (let i = 0; i < retries; i++) {
+        input.value = content;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        // verify
+        if (input.value === content) return true;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return false;
+    };
+
+    // paste
+    const tryPasteContent = async (input, retries = 10) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          await navigator.clipboard.writeText(content);
+          input.focus();
+          document.execCommand('paste');
+          
+          // verify
+          if (input.value === content) return true;
+        } catch (error) {
+          console.error('paste failed:', error);
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return false;
+    };
+
+    const showToast = (message) => {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 10000;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    };
+
+    // main worker
+    const input = await findInput();
+    if (!input) {
+      showToast('did not find input box to input');
+      return;
     }
+
+    // try set text
+    if (await setInputValue(input)) {
+      return;
+    }
+
+    // try paste
+    if (await tryPasteContent(input)) {
+      return;
+    }
+
+    // all failed
+    showToast('content insert failed');
   }
 }
 
