@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+  "name": "DeepSeek Helper",
+  "version": "1.0",
+  "description": "Add quick input for DeepSeek",
+  "permissions": [
+    "storage",
+    "*://chat.deepseek.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://chat.deepseek.com/*"],
+      "js": ["content.js"],
+      "css": ["sidebar.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "deepseek-helper@zxkmm.com"
+    }
+  }
+} 
